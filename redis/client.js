@@ -1,16 +1,44 @@
-// redis/client.js
-const { createClient } = require('redis');
+const { createClient } = require("redis");
 
-const client = createClient(); // will use localhost:6379 by default
+const isCloudRedis = !!process.env.REDIS_URL;
 
-client.on('error', (err) => console.error('Redis Client Error', err));
+const redisUrl = isCloudRedis
+  ? process.env.REDIS_URL
+  : "redis://127.0.0.1:6379";
+
+const client = createClient({ url: redisUrl });
+
+client.on("connect", () => {
+  console.log(
+    `🔄 Connecting to Redis (${
+      isCloudRedis ? "Redis Cloud" : "Local Redis"
+    })...`
+  );
+});
+
+client.on("ready", () => {
+  console.log(
+    `✅ Redis ready (${isCloudRedis ? "Redis Cloud" : "Local Redis"})`
+  );
+});
+
+client.on("error", (err) => {
+  console.error(
+    `❌ Redis error (${isCloudRedis ? "Redis Cloud" : "Local Redis"}):`,
+    err
+  );
+});
 
 (async () => {
   try {
     await client.connect();
-    console.log('✅ Connected to Redis');
   } catch (err) {
-    console.error('❌ Redis connection failed:', err);
+    console.error(
+      `❌ Redis connection failed (${
+        isCloudRedis ? "Redis Cloud" : "Local Redis"
+      }):`,
+      err
+    );
   }
 })();
 
