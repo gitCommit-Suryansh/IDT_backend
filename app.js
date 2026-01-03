@@ -10,7 +10,6 @@ const expressSession = require("express-session");
 const connectDB = require("./database/connection");
 
 const authRoute = require("./routes/auth");
-const applicantRoutes = require("./routes/applicants.js");
 const contestRoutes = require("./routes/contest.js");
 
 // ✅ Use Render port first
@@ -41,7 +40,6 @@ app.use(
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/api/auth", authRoute);
-app.use("/api/applicants", applicantRoutes);
 app.use("/api/contests", contestRoutes);
 
 app.get("/", (req, res) => {
