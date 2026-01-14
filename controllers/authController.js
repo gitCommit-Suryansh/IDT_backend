@@ -19,7 +19,8 @@ exports.signupInitiate = async (req, res) => {
     }
 
     // const otp = generateOtp();
-    const otp=1204;
+    const otp = 1204;
+
     await saveOtp(mobileNumber, otp);
 
     // Save user details temporarily in Redis
@@ -56,7 +57,7 @@ exports.verifyOtp = async (req, res) => {
     const firebaseUser = await createUserWithEmailAndPassword(firebaseAuth, email, password);
 
     // Save user in MongoDB
-    let user=await User.create({
+    let user = await User.create({
       name,
       email,
       mobileNumber,
@@ -68,7 +69,12 @@ exports.verifyOtp = async (req, res) => {
     // Clean up Redis
     await deleteTempUser(mobileNumber)
 
-    return res.status(200).json({ message: 'Registration successful',user: user});
+    // Get Token
+    const token = await firebaseUser.user.getIdToken();
+    const userObj = user.toObject();
+    userObj.token = token;
+
+    return res.status(200).json({ message: 'Registration successful', User: userObj, user: userObj });
   } catch (error) {
     return res.status(500).json({ message: 'OTP verification failed', error: error.message });
   }
@@ -93,9 +99,13 @@ exports.loginWithEmail = async (req, res) => {
       return res.status(404).json({ message: "User not found in database" });
     }
 
+    const token = await firebaseUser.user.getIdToken();
+    const userObj = user.toObject();
+    userObj.token = token;
+
     return res.status(200).json({
       message: "Login successful",
-      user,
+      user: userObj,
     });
 
   } catch (err) {
@@ -119,7 +129,7 @@ exports.mobileLogin = async (req, res) => {
   if (!user) return res.status(404).json({ message: "User not found" });
 
   // const otp = generateOtp();
-  const otp=1204;
+  const otp = 1204;
   await saveOtp(mobileNumber, otp);
   // await sendOtp(mobileNumber, otp);
 
@@ -128,6 +138,8 @@ exports.mobileLogin = async (req, res) => {
 
 
 
+
+const jwt = require('jsonwebtoken'); // Added for mobile login token
 
 // ✅ Verify Mobile OTP (OTP Step 2)
 exports.verifyMobileLoginOtp = async (req, res) => {
@@ -141,7 +153,12 @@ exports.verifyMobileLoginOtp = async (req, res) => {
   const user = await User.findOne({ mobileNumber });
   if (!user) return res.status(404).json({ message: 'User not found' });
 
-  return res.status(200).json({ message: 'Login successful', user });
+  // Generate a fallback JWT since we can't get Firebase ID Token without password
+  const token = jwt.sign({ uid: user.firebaseUID }, process.env.JWT_SECRET || 'dev-secret', { expiresIn: '30d' });
+  const userObj = user.toObject();
+  userObj.token = token;
+
+  return res.status(200).json({ message: 'Login successful', user: userObj });
 };
 
 
@@ -158,5 +175,98 @@ exports.adminLogin = async (req, res) => {
     }
   } catch (err) {
     return res.status(500).json({ message: "There is some error", error: err.message });
+  }
+};
+
+const admin = require("../services/adminFirebase");
+
+// ✅ Update Profile
+// ✅ Update Profile
+exports.updateProfile = async (req, res) => {
+  try {
+    const firebaseUID = req.firebaseUID; // From middleware
+
+    if (!firebaseUID) return res.status(401).json({ message: 'Unauthorized' });
+
+    const { name, age, gender, mobileNumber } = req.body;
+
+    let updateFields = {};
+    if (name) updateFields.name = name;
+    if (age) updateFields.age = age;
+    if (gender) updateFields.gender = gender;
+    if (mobileNumber) updateFields.mobileNumber = mobileNumber;
+
+    // Check for uploaded file
+    if (req.file && req.file.path) {
+      updateFields.profileImage = req.file.path;
+    }
+
+    const user = await User.findOneAndUpdate(
+      { firebaseUID },
+      { $set: updateFields },
+      { new: true }
+    );
+
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Optional: Update Firebase Display Name
+    try {
+      let firebaseUpdates = {};
+      if (name) firebaseUpdates.displayName = name;
+      if (updateFields.profileImage) firebaseUpdates.photoURL = updateFields.profileImage;
+
+      if (Object.keys(firebaseUpdates).length > 0) {
+        await admin.auth().updateUser(firebaseUID, firebaseUpdates);
+      }
+    } catch (e) {
+      console.error('Firebase update failed (non-fatal)', e);
+    }
+
+    const userObj = user.toObject();
+    return res.status(200).json({ message: 'Profile updated', user: userObj });
+
+  } catch (err) {
+    console.error('Update profile error', err);
+    return res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// ✅ Change Password
+exports.changePassword = async (req, res) => {
+  try {
+    const firebaseUID = req.firebaseUID;
+    const { newPassword } = req.body;
+
+    if (!firebaseUID) return res.status(401).json({ message: 'Unauthorized' });
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    }
+
+    // Force update via Admin SDK
+    await admin.auth().updateUser(firebaseUID, {
+      password: newPassword,
+    });
+
+    return res.status(200).json({ message: 'Password updated successfully' });
+
+  } catch (err) {
+    console.error('Change password error', err);
+    return res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// ✅ Get Profile
+exports.getProfile = async (req, res) => {
+  try {
+    const firebaseUID = req.firebaseUID;
+    if (!firebaseUID) return res.status(401).json({ message: 'Unauthorized' });
+
+    const user = await User.findOne({ firebaseUID });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    return res.status(200).json({ user });
+  } catch (err) {
+    console.error('Get profile error', err);
+    return res.status(500).json({ message: 'Server error', error: err.message });
   }
 };

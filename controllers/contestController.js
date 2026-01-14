@@ -1,6 +1,6 @@
 const Contest = require("../models/contest");
+const ContestParticipation = require("../models/contestParticipation");
 
-// POST /api/contest/create
 // POST /api/contest/create
 exports.createContest = async (req, res) => {
   try {
@@ -137,9 +137,19 @@ exports.getContestById = async (req, res) => {
     if (!contest) {
       return res.status(404).json({ message: "Contest not found" });
     }
+
+    // Get real participant count dynamically
+    const realCount = await ContestParticipation.countDocuments({
+      contestId: contest._id,
+      isPaid: true
+    });
+
+    const contestObj = contest.toObject();
+    contestObj.totalParticipants = realCount;
+
     return res
       .status(200)
-      .json({ message: "Contest fetched successfully", contest });
+      .json({ message: "Contest fetched successfully", contest: contestObj });
   } catch (err) {
     console.error("Error fetching contest:", err);
     return res.status(500).json({ message: "Server error" });

@@ -29,6 +29,14 @@ const userSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
+  profileImage: {
+    type: String,
+    default: '',
+  },
+  bookmarks: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Contest'
+  }],
 }, {
   timestamps: true,
 });

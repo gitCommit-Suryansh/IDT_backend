@@ -16,8 +16,8 @@ const storage = new CloudinaryStorage({
 
     return {
       folder: targetFolder,
-      resource_type: file.mimetype.startsWith('video/') ? 'video' : 'image',
-      allowed_formats: allowedFormats,
+      resource_type: 'auto', // safer
+      allowedFormats: allowedFormats, // camelCase
       public_id: `${Date.now()}-${file.originalname.split('.')[0]}`,
     };
   },

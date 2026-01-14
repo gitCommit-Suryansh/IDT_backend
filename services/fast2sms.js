@@ -1,22 +1,25 @@
 const axios = require('axios');
 
-const sendOtp = async (mobile, otp) => {
-  const response = await axios.get('https://www.fast2sms.com/dev/bulkV2', {
-    params: {
-      authorization: "mQZndMoYEb9ywRlarh6kVLgIWs13CTiGKjFNu2petzJfqcUv8A9yEJInjPwHh8MZdtVGOm7eiYCoNF21",
-      message: `your otp is ${otp}`,
-      route: 'q',
-      numbers: mobile,
-    //   authorization: 'YOUR_FAST2SMS_API_KEY',
-    //   variables_values: otp,
-    //   route: 'otp',
-    //   numbers: mobile,
-    },
-    headers: {
-      'cache-control': 'no-cache',
-    },
-  });
+const FAST2SMS_KEY = process.env.FAST2SMS_API_KEY || null;
 
+const sendOtp = async (mobile, otp) => {
+  const url = 'https://www.fast2sms.com/dev/bulkV2';
+
+  const params = {
+    message: `Your OTP is ${otp}`,
+    route: 'q',
+    numbers: mobile,
+  };
+
+  const headers = {
+    'cache-control': 'no-cache',
+  };
+
+  if (FAST2SMS_KEY) {
+    headers['authorization'] = FAST2SMS_KEY;
+  }
+
+  const response = await axios.get(url, { params, headers });
   return response.data;
 };
 
