@@ -21,6 +21,19 @@ router.post('/verify-mobile-login', authController.verifyMobileLoginOtp);
 
 
 
-router.post('/admin-login',authController.adminLogin)
+const verifyFirebaseToken = require('../middlewares/firebaseAuth');
+const upload = require('../config/multer-config');
+
+// Middleware to set folder
+const setProfileFolder = (req, res, next) => {
+    req.folderName = 'IDT-MEDIA/profiles';
+    next();
+};
+
+router.get('/profile', verifyFirebaseToken, authController.getProfile);
+router.put('/profile', verifyFirebaseToken, setProfileFolder, upload.single('profileImage'), authController.updateProfile);
+router.post('/change-password', verifyFirebaseToken, authController.changePassword);
+
+router.post('/admin-login', authController.adminLogin)
 
 module.exports = router;

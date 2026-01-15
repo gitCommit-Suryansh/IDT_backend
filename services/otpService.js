@@ -1,7 +1,8 @@
 const client = require('../redis/client');
 
 const saveOtp = async (mobile, otp) => {
-  await client.set(`otp:${mobile}`, otp, { EX: 300 }); // expires in 5 min
+  // store OTP as string to avoid type-mismatch on retrieval
+  await client.set(`otp:${mobile}`, String(otp), { EX: 300 }); // expires in 5 min
 };
 
 const saveTempUser = async (mobileNumber, name, email, age, gender, password) => {
@@ -21,7 +22,9 @@ const deleteTempUser=async(mobileNumber)=>{
 
 const verifyOtp = async (mobile, inputOtp) => {
   const savedOtp = await client.get(`otp:${mobile}`);
-  return savedOtp === inputOtp;
+  if (!savedOtp) return false;
+  // compare as strings to avoid type mismatch between stored value and incoming value
+  return String(savedOtp) === String(inputOtp);
 };
 
 module.exports = { saveOtp, verifyOtp,saveTempUser ,getTempUser,deleteTempUser};
