@@ -16,7 +16,11 @@ const contestParticipationSchema = new mongoose.Schema(
 
     // PAYMENT
     isPaid: { type: Boolean, default: false },
-    paymentId: { type: String },
+    paymentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Payment",
+    },
+    // Legacy/Mock fields (can be deprecated)
     paymentAmount: { type: Number },
     paymentMethod: { type: String },
     paidAt: { type: Date },
@@ -28,7 +32,7 @@ const contestParticipationSchema = new mongoose.Schema(
       default: "REGISTERED",
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 /**
@@ -38,5 +42,5 @@ contestParticipationSchema.index({ userId: 1, contestId: 1 }, { unique: true });
 
 module.exports = mongoose.model(
   "ContestParticipation",
-  contestParticipationSchema
+  contestParticipationSchema,
 );

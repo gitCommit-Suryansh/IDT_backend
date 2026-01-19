@@ -22,7 +22,7 @@ app.use(
   cors({
     origin: "*",
     credentials: true,
-  })
+  }),
 );
 
 app.use(express.json({ limit: "5mb" }));
@@ -34,13 +34,14 @@ app.use(
     resave: false,
     saveUninitialized: false,
     secret: process.env.EXPRESS_SESSION_SECRET || "dev-secret",
-  })
+  }),
 );
 
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/api/auth", authRoute);
 app.use("/api/contests", contestRoutes);
+app.use("/api/payment", require("./routes/payment"));
 
 app.get("/", (req, res) => {
   return res.json({ message: "pinging" });
