@@ -9,7 +9,7 @@ COPY package*.json ./
 
 # Install dependencies (only production if you prefer, but standard install is safer for dev tools needed at runtime)
 # Using ci for cleaner install based on lockfile
-RUN npm ci --only=production
+RUN npm ci --omit=dev --legacy-peer-deps
 
 # Copy the rest of the application code
 COPY . .
