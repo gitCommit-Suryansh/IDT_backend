@@ -13,7 +13,7 @@ const authRoute = require("./routes/auth");
 const contestRoutes = require("./routes/contest.js");
 
 // ✅ Use Render port first
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 
 // DB connection (non-blocking)
 connectDB();

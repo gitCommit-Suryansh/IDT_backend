@@ -10,6 +10,8 @@ exports.initiatePayment = async (req, res) => {
   try {
     const { contestId } = req.body;
     const firebaseUID = req.firebaseUID;
+    console.log("firebaseUID", firebaseUID);
+    console.log("contestId", contestId);
 
     if (!firebaseUID) return res.status(401).json({ message: "Unauthorized" });
 
@@ -72,7 +74,7 @@ exports.initiatePayment = async (req, res) => {
     // 3. Call PhonePe Service
     const frontendUrl =
       process.env.PAYMENT_REDIRECT_BASE_URL ||
-      "http://172.31.125.169:3001/payment"; // React App URL
+      "http://192.168.182.169:3001/payment"; // React App URL
     // The React app will handle status check at: /payment/status?merchantOrderId=...
     const redirectUrl = `${frontendUrl}/status?merchantOrderId=${merchantOrderId}&contestId=${contest._id}`;
     const callbackUrl = `${process.env.BACKEND_URL}/api/payment/callback`; // Server-to-server callback
@@ -150,13 +152,6 @@ exports.getPaymentStatus = async (req, res) => {
       payment.status = "FAILED";
       await payment.save();
     }
-
-    // MOCK LOGIC FOR NOW TO PASS TESTING WITHOUT REAL PHONEPE CREDENTIALS IF NEEDED
-    // BUT USER ASKED FOR REAL.
-    // I will enable the code block.
-
-    // NOTE: Without valid .env credentials, this will fail.
-    // I should ensure error handling doesn't crash app.
 
     return res.status(200).json({
       success: true,
