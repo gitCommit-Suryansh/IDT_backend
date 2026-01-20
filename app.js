@@ -20,7 +20,11 @@ connectDB();
 
 app.use(
   cors({
-    origin: "*",
+    origin: [
+      "https://idteventmanagement.online",
+      "https://www.idteventmanagement.online",
+      "http://localhost:3000",
+    ],
     credentials: true,
   }),
 );
