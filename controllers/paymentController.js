@@ -74,7 +74,8 @@ exports.initiatePayment = async (req, res) => {
     // 3. Call PhonePe Service
     const frontendUrl =
       process.env.PAYMENT_REDIRECT_BASE_URL ||
-      "http://192.168.182.169:3001/payment"; // React App URL
+      // "http://192.168.182.169:3001/payment";
+      "https://idteventmanagement.online/payment";
     // The React app will handle status check at: /payment/status?merchantOrderId=...
     const redirectUrl = `${frontendUrl}/status?merchantOrderId=${merchantOrderId}&contestId=${contest._id}`;
     const callbackUrl = `${process.env.BACKEND_URL}/api/payment/callback`; // Server-to-server callback
