@@ -92,6 +92,7 @@ exports.initiatePayment = async (req, res) => {
     );
 
     if (orderResponse.success && orderResponse.redirectUrl) {
+      console.log("redirectUrl", orderResponse.redirectUrl);
       return res.status(200).json({
         success: true,
         redirectUrl: orderResponse.redirectUrl,
