@@ -24,6 +24,7 @@ app.use(
       "https://idteventmanagement.online",
       "https://www.idteventmanagement.online",
       "http://localhost:3000",
+      "http://localhost:6001",
     ],
     credentials: true,
   }),
