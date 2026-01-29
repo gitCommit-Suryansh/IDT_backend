@@ -97,4 +97,13 @@ router.get(
   bookmarkController.getBookmarkedContests,
 );
 
+const winnerController = require("../controllers/winnerController");
+
+// Winner Routes
+router.get(
+  "/:contestID/potential-winners",
+  winnerController.getPotentialWinners,
+);
+router.post("/:contestID/publish-winners", winnerController.publishWinners);
+
 module.exports = router;

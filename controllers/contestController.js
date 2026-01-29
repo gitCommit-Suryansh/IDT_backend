@@ -1,5 +1,6 @@
 const Contest = require("../models/contest");
 const ContestParticipation = require("../models/contestParticipation");
+const ContestWinner = require("../models/ContestWinner");
 
 // POST /api/contest/create
 exports.createContest = async (req, res) => {
@@ -133,7 +134,7 @@ exports.getAllContests = async (req, res) => {
         const cObj = c.toObject();
         cObj.totalParticipants = count;
         return cObj;
-      })
+      }),
     );
 
     res.status(200).json({ contests: contestsWithCount });
@@ -155,11 +156,29 @@ exports.getContestById = async (req, res) => {
     // Get real participant count dynamically
     const realCount = await ContestParticipation.countDocuments({
       contestId: contest._id,
-      isPaid: true
+      isPaid: true,
     });
 
     const contestObj = contest.toObject();
     contestObj.totalParticipants = realCount;
+
+    // ...
+
+    // Attach winners if announced
+    if (contest.winnersAnnounced) {
+      try {
+        const winners = await ContestWinner.find({ contestId: contest._id })
+          .populate("userId", "name profileImage")
+          .sort({ rank: 1 });
+
+        console.log(
+          `[getContestById] Contest ${contest._id} announced. Found ${winners.length} winners.`,
+        );
+        contestObj.winners = winners;
+      } catch (wErr) {
+        console.error("Error fetching winners for contest:", wErr);
+      }
+    }
 
     return res
       .status(200)
