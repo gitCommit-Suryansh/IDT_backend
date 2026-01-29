@@ -151,7 +151,7 @@ exports.getEntryById = async (req, res) => {
       { new: true },
     )
       .populate("userId", "name profileImage")
-      .populate("contestId", "name");
+      .populate("contestId", "name votingEndAt");
     if (!entry) return res.status(404).json({ message: "Entry not found" });
 
     // Vote Logic
