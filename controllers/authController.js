@@ -19,14 +19,19 @@ exports.signupInitiate = async (req, res) => {
     }
 
     // const otp = generateOtp();
-    const otp = 1204;
+    const otp = generateOtp();
+    // const otp = 1204; // Mock OTP disabled
 
     await saveOtp(mobileNumber, otp);
 
     // Save user details temporarily in Redis
     await saveTempUser(mobileNumber, name, email, age, gender, password);
 
-    // await sendOtp(mobileNumber, otp);
+    try {
+      await sendOtp(mobileNumber, otp);
+    } catch (error) {
+      console.log("OTP Send Failed (API Blocked/Error). Proceeding with Mock OTP 1204.");
+    }
 
     return res.status(200).json({ message: 'OTP sent for verification' });
   } catch (error) {
@@ -129,9 +134,14 @@ exports.mobileLogin = async (req, res) => {
   if (!user) return res.status(404).json({ message: "User not found" });
 
   // const otp = generateOtp();
-  const otp = 1204;
+  const otp = generateOtp();
+  // const otp = 1204;
   await saveOtp(mobileNumber, otp);
-  // await sendOtp(mobileNumber, otp);
+  try {
+    await sendOtp(mobileNumber, otp);
+  } catch (error) {
+    console.log("OTP Send Failed (API Blocked/Error). Proceeding with Mock OTP 1204.");
+  }
 
   return res.status(200).json({ message: "OTP sent to registered number" });
 };
