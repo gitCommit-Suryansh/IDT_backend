@@ -11,8 +11,6 @@ router.post(
 );
 router.get("/status", paymentController.getPaymentStatus); // Can be public or protected, normally public for React App access
 
-// Callback (S2S)
-// Razorpay specific routes
 router.post("/create-order", paymentController.createRazorpayOrder); // Public/Protected depending on flow, usually public if called from frontend with referenceId
 
 router.post("/check-payment", paymentController.checkRazorpayPayment);

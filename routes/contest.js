@@ -6,7 +6,6 @@ const verifyFirebaseToken = require("../middlewares/firebaseAuth");
 const participationController = require("../controllers/participationController");
 const entryController = require("../controllers/entryController");
 const voteController = require("../controllers/voteController");
-const demoPaymentController = require("../controllers/demoPaymentController");
 
 // Static Routes (must come before /:contestID)
 router.post(
@@ -18,10 +17,6 @@ router.post(
   upload.single("bannerImage"),
   contestController.createContest,
 );
-
-// Demo Payment Routes
-router.get("/pay-demo", demoPaymentController.renderDemoPage);
-router.post("/pay-demo/complete", demoPaymentController.completeDemoPayment);
 
 router.get("/all", contestController.getAllContests);
 router.get("/my-entries", verifyFirebaseToken, entryController.getMyEntries);
@@ -79,10 +74,6 @@ router.get(
   participationController.getReferralLink,
 );
 router.get("/:contestID/participants", participationController.getParticipants);
-
-// Global Actions (no ID prefix but unique enough)
-// Payment callback (PhonePe/demo) - public endpoint called by payment gateway
-router.post("/payment-callback", participationController.paymentCallback);
 
 // Bookmarks
 const bookmarkController = require("../controllers/bookmarkController");

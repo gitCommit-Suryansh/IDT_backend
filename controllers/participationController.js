@@ -23,31 +23,23 @@ exports.registerForContest = async (req, res) => {
       contestId: contest._id,
     });
     if (participation) {
-      // If not paid, allow retry
-      if (!participation.isPaid && contest.entryFee && contest.entryFee > 0) {
-        const baseUrl = process.env.BACKEND_URL || "http://localhost:3000";
-        const phonePeDemoUrl = `${baseUrl}/api/contests/pay-demo?participationId=${participation._id}&amount=${contest.entryFee}`;
-        return res.status(200).json({
-          message: "Already registered - Payment Pending",
-          participation,
-          paymentUrl: phonePeDemoUrl,
-        });
-      }
-      // return existing participation with payment info
       return res
         .status(200)
         .json({ message: "Already registered", participation });
     }
 
     // Create participation record
-    const paymentId = uuidv4();
+    // Note: For paid contests, the payment flow usually initiates participation
+    // But if this is called first, we create it as pending payment.
     participation = await ContestParticipation.create({
       userId: user._id,
       contestId: contest._id,
       isPaid: contest.entryFee && contest.entryFee > 0 ? false : true,
-      paymentId:
-        contest.entryFee && contest.entryFee > 0 ? paymentId : undefined,
       paymentAmount: contest.entryFee || 0,
+      status:
+        contest.entryFee && contest.entryFee > 0
+          ? "PENDING_PAYMENT"
+          : "REGISTERED",
     });
 
     // If no payment required, respond success
@@ -62,60 +54,12 @@ exports.registerForContest = async (req, res) => {
         .json({ message: "Registered (no payment required)", participation });
     }
 
-    // Otherwise return a mock PhonePe demo URL that the frontend can open
-    // We direct them to our own backend demo page
-    const baseUrl = process.env.BACKEND_URL || "http://localhost:3000";
-    const phonePeDemoUrl = `${baseUrl}/api/contests/pay-demo?participationId=${participation._id}&amount=${contest.entryFee}`;
-
     return res.status(201).json({
       message: "Registered - payment required",
       participation,
-      paymentUrl: phonePeDemoUrl,
     });
   } catch (err) {
     console.error("registerForContest error", err);
-    return res
-      .status(500)
-      .json({ message: "Server error", error: err.message });
-  }
-};
-
-// POST /api/contests/payment-callback
-// Expects: { paymentId, status }
-exports.paymentCallback = async (req, res) => {
-  try {
-    const { paymentId, status } = req.body;
-    if (!paymentId)
-      return res.status(400).json({ message: "paymentId required" });
-
-    const participation = await ContestParticipation.findOne({ paymentId });
-    if (!participation)
-      return res.status(404).json({ message: "Participation not found" });
-
-    if (status === "SUCCESS" || status === "COMPLETED") {
-      participation.isPaid = true;
-      participation.paidAt = new Date();
-      participation.status = "REGISTERED";
-      await participation.save();
-
-      // increment contest totalParticipants if needed
-      await Contest.findByIdAndUpdate(participation.contestId, {
-        $inc: { totalParticipants: 1 },
-      });
-
-      return res
-        .status(200)
-        .json({ message: "Payment recorded", participation });
-    }
-
-    // For other statuses just record and return
-    participation.paymentStatus = status;
-    await participation.save();
-    return res
-      .status(200)
-      .json({ message: "Payment status updated", participation });
-  } catch (err) {
-    console.error("paymentCallback error", err);
     return res
       .status(500)
       .json({ message: "Server error", error: err.message });
