@@ -60,6 +60,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/api/auth", authRoute);
 app.use("/api/contests", contestRoutes);
 app.use("/api/payment", require("./routes/payment"));
+app.use("/api/deletion-requests", require("./routes/deletionRequest"));
 
 app.get("/", (req, res) => {
   return res.json({ message: "pinging" });
