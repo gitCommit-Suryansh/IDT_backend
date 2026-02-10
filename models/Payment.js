@@ -23,7 +23,16 @@ const paymentSchema = new mongoose.Schema(
       unique: true,
     },
     transactionId: {
-      type: String, // from PhonePe
+      type: String, // from PhonePe or Razorpay
+    },
+    razorpayOrderId: {
+      type: String,
+    },
+    razorpayPaymentId: {
+      type: String,
+    },
+    razorpaySignature: {
+      type: String,
     },
     amount: {
       type: Number,
