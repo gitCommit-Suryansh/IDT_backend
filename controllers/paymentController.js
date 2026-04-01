@@ -232,6 +232,20 @@ exports.getPaymentStatus = async (req, res) => {
   }
 };
 
+exports.getPaymentDetailsById = async (req, res) => {
+  try {
+    const payment = await Payment.findById(req.params.paymentId)
+      .populate("userId", "name email mobileNumber")
+      .populate("contestId", "name theme entryFee");
+    if (!payment) return res.status(404).json({ message: "Payment not found" });
+
+    return res.status(200).json({ payment });
+  } catch (err) {
+    console.error("getPaymentDetails Error:", err);
+    return res.status(500).json({ message: "Failed to fetch payment details", error: err.message });
+  }
+};
+
 exports.handleCallback = async (req, res) => {
   // Razorpay Webhooks can be handled here
   console.log("Razorpay Webhook:", req.body);

@@ -18,4 +18,6 @@ router.post("/check-payment", paymentController.checkRazorpayPayment);
 // Callback (Webhook)
 router.post("/callback", paymentController.handleCallback);
 
+router.get("/details/:paymentId", paymentController.getPaymentDetailsById);
+
 module.exports = router;

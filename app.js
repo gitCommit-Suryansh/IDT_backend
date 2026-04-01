@@ -24,6 +24,7 @@ app.use(
         "https://idteventmanagement.online",
         "https://www.idteventmanagement.online",
         "http://idteventmanagement.online",
+        "http://10.77.60.169:4000",
       ];
 
       // Allow requests with no origin (like mobile apps or curl requests)

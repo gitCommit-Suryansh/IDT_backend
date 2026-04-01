@@ -98,7 +98,10 @@ exports.loginWithEmail = async (req, res) => {
     const firebaseUID = firebaseUser.user.uid;
 
     // Find user in your MongoDB
-    const user = await User.findOne({ firebaseUID });
+    const user = await User.findOne({ firebaseUID }).populate({
+      path: 'winnings',
+      populate: { path: 'contestId', select: 'name bannerImage' }
+    });
 
     if (!user) {
       return res.status(404).json({ message: "User not found in database" });
@@ -160,7 +163,10 @@ exports.verifyMobileLoginOtp = async (req, res) => {
     return res.status(400).json({ message: 'Invalid or expired OTP' });
   }
 
-  const user = await User.findOne({ mobileNumber });
+  const user = await User.findOne({ mobileNumber }).populate({
+    path: 'winnings',
+    populate: { path: 'contestId', select: 'name bannerImage' }
+  });
   if (!user) return res.status(404).json({ message: 'User not found' });
 
   // Generate a fallback JWT since we can't get Firebase ID Token without password
@@ -271,7 +277,10 @@ exports.getProfile = async (req, res) => {
     const firebaseUID = req.firebaseUID;
     if (!firebaseUID) return res.status(401).json({ message: 'Unauthorized' });
 
-    const user = await User.findOne({ firebaseUID });
+    const user = await User.findOne({ firebaseUID }).populate({
+      path: 'winnings',
+      populate: { path: 'contestId', select: 'name bannerImage' }
+    });
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     return res.status(200).json({ user });

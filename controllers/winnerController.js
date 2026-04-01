@@ -2,6 +2,7 @@ const Contest = require("../models/contest");
 const ContestEntry = require("../models/contestEntry");
 const Vote = require("../models/Vote");
 const ContestWinner = require("../models/ContestWinner");
+const User = require("../models/user");
 
 // GET /api/contests/:contestID/potential-winners
 exports.getPotentialWinners = async (req, res) => {
@@ -57,15 +58,25 @@ exports.publishWinners = async (req, res) => {
     }
 
     // Optional: Date Check (ensure we preserve the rule)
-    if (
-      contest.resultsAnnounceAt &&
-      new Date() < new Date(contest.resultsAnnounceAt)
-    ) {
-      // Allow admin override? Or strictly enforce?
-      // User requirement said: "only if current date is same or later"
-      return res
-        .status(400)
-        .json({ message: "It is too early to announce results." });
+    if (contest.resultsAnnounceAt) {
+      // Treat the stored date as LOCAL time (strip UTC markers)
+      const announceAtStr = contest.resultsAnnounceAt.toString();
+      const cleaned = announceAtStr.replace(/\+00:00$|\+0000$|Z$/, "");
+      const announceAtLocal = new Date(cleaned);
+
+      // Get "Now" in IST (+5:30)
+      // Since new Date() is UTC, we add 5.5 hours to get the effective Local Now
+      const nowIST = new Date(new Date().getTime() + (5.5 * 60 * 60 * 1000));
+
+      if (nowIST < announceAtLocal) {
+        return res
+          .status(400)
+          .json({ 
+            message: "It is too early to announce results.",
+            currentTimeIST: nowIST.toISOString(),
+            scheduledTimeIST: announceAtLocal.toISOString()
+          });
+      }
     }
 
     // 1. Re-calculate Top 3 (Security measure)
@@ -89,8 +100,8 @@ exports.publishWinners = async (req, res) => {
     }
 
     // 2. Create ContestWinner records
-    const winnerPromises = top3.map((winner, index) => {
-      return ContestWinner.create({
+    const winnerPromises = top3.map(async (winner, index) => {
+      const contestWinner = await ContestWinner.create({
         contestId: contestID,
         entryId: winner._id,
         userId: winner.userId, // ID reference
@@ -98,6 +109,13 @@ exports.publishWinners = async (req, res) => {
         votesAtWinTime: winner.totalVotes,
         announcedAt: new Date(),
       });
+
+      // Update User wins
+      await User.findByIdAndUpdate(winner.userId, {
+        $push: { winnings: contestWinner._id }
+      });
+
+      return contestWinner;
     });
 
     await Promise.all(winnerPromises);

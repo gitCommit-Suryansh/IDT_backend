@@ -142,15 +142,17 @@ exports.getParticipants = async (req, res) => {
       .lean()
       .sort({ createdAt: -1 });
 
-    // Enrich with Entry ID
+    // Enrichment Map
     const participantsWithEntries = await Promise.all(
       participations.map(async (p) => {
-        const entry = await ContestEntry.findOne({
-          participationId: p._id,
-        }).select("_id images videoUrl");
+        const entry = await ContestEntry.findOne({ participationId: p._id })
+          .select("_id images videoUrl")
+          .lean();
+        
         return {
           ...p,
-          entryId: entry ? entry._id : null,
+          entryId: entry ? entry._id.toString() : null,
+          hasEntry: !!entry,
           entryThumbnail:
             entry && entry.images && entry.images.length > 0
               ? entry.images[0]
