@@ -34,6 +34,7 @@ router.get("/entries/:entryId", entryController.getEntryById);
 
 // Dynamic Routes
 router.get("/:contestID", contestController.getContestById);
+router.put("/:contestID/update", contestController.updateContest);
 
 // Contest Actions
 router.post(

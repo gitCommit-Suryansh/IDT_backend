@@ -35,20 +35,17 @@ exports.createContest = async (req, res) => {
       });
     }
 
-    const regStart = new Date(registrationStartAt);
-    const regEnd = new Date(registrationEndAt);
+    const parseUTC = (d) => d ? new Date(d.endsWith('Z') || d.includes('+') ? d : d + 'Z') : null;
+
+    const regStart = parseUTC(registrationStartAt);
+    const regEnd = parseUTC(registrationEndAt);
 
     // Voting starts IMMEDIATELY when registration starts
     const voteStart = regStart;
-    const voteEnd = new Date(votingEndAt);
+    const voteEnd = parseUTC(votingEndAt);
 
-    const winnersAnnounceDate = winnersAnnouncedAt
-      ? new Date(winnersAnnouncedAt)
-      : null;
-
-    const resultsAnnounceDate = resultsAnnounceAt
-      ? new Date(resultsAnnounceAt)
-      : null;
+    const winnersAnnounceDate = parseUTC(winnersAnnouncedAt);
+    const resultsAnnounceDate = parseUTC(resultsAnnounceAt);
 
     if (isNaN(regStart) || isNaN(regEnd) || isNaN(voteEnd)) {
       return res.status(400).json({
@@ -185,6 +182,65 @@ exports.getContestById = async (req, res) => {
       .json({ message: "Contest fetched successfully", contest: contestObj });
   } catch (err) {
     console.error("Error fetching contest:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+// PUT /api/contest/:contestID/update
+exports.updateContest = async (req, res) => {
+  const contestId = req.params.contestID;
+  try {
+    const { name, prizePool, registrationEndAt, votingEndAt, resultsAnnounceAt } = req.body;
+
+    const contest = await Contest.findById(contestId);
+    if (!contest) {
+      return res.status(404).json({ message: "Contest not found" });
+    }
+
+    if (name) contest.name = name;
+    if (prizePool !== undefined) contest.prizePool = prizePool;
+
+    const parseUTC = (d) => d ? new Date(d.endsWith('Z') || d.includes('+') ? d : d + 'Z') : null;
+
+    if (registrationEndAt) {
+      const regEnd = parseUTC(registrationEndAt);
+      if (isNaN(regEnd)) return res.status(400).json({ message: "Invalid registrationEndAt date format" });
+      if (regEnd <= contest.registrationStartAt) {
+        return res.status(400).json({ message: "Registration end date must be after registration start date" });
+      }
+      contest.registrationEndAt = regEnd;
+    }
+
+    if (votingEndAt) {
+      const voteEnd = parseUTC(votingEndAt);
+      if (isNaN(voteEnd)) return res.status(400).json({ message: "Invalid votingEndAt date format" });
+      if (voteEnd <= contest.votingStartAt) {
+        return res.status(400).json({ message: "Support end date must be after support start date" });
+      }
+      contest.votingEndAt = voteEnd;
+    }
+    
+    // Safety check matching create constraint
+    if (contest.registrationEndAt > contest.votingEndAt) {
+      return res.status(400).json({ message: "Registration cannot end after support ends" });
+    }
+
+    if (resultsAnnounceAt !== undefined) {
+      // Allow clearing it if falsy, otherwise parse date
+      const announceDate = parseUTC(resultsAnnounceAt);
+      if (announceDate && isNaN(announceDate)) return res.status(400).json({ message: "Invalid resultsAnnounceAt date format" });
+      contest.resultsAnnounceAt = announceDate;
+    }
+
+    await contest.save();
+
+    return res.status(200).json({
+      message: "Contest updated successfully",
+      contest
+    });
+
+  } catch (err) {
+    console.error("Error updating contest:", err);
     return res.status(500).json({ message: "Server error" });
   }
 };
