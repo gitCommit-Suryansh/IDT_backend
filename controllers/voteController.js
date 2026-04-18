@@ -19,7 +19,13 @@ exports.voteForEntry = async (req, res) => {
     const contest = await Contest.findById(contestID);
     if (!contest) return res.status(404).json({ message: 'Contest not found' });
 
-    const entry = await ContestEntry.findById(entryId);
+    const mongoose = require('mongoose');
+    let entry;
+    if (mongoose.Types.ObjectId.isValid(entryId)) {
+      entry = await ContestEntry.findById(entryId);
+    } else {
+      entry = await ContestEntry.findOne({ entryNumber: parseInt(entryId, 10) });
+    }
     if (!entry) return res.status(404).json({ message: 'Entry not found' });
     if (String(entry.contestId) !== String(contest._id)) return res.status(400).json({ message: 'Entry does not belong to contest' });
 

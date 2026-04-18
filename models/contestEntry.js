@@ -19,6 +19,11 @@ const contestEntrySchema = new mongoose.Schema(
       ref: "Contest",
       required: true,
     },
+    entryNumber: {
+      type: Number,
+      unique: true,
+      sparse: true,
+    },
 
     images: {
       type: [String],

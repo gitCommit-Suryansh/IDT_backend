@@ -75,7 +75,7 @@ exports.getReferralLink = async (req, res) => {
     const contest = await Contest.findById(contestID);
     if (!contest) return res.status(404).json({ message: "Contest not found" });
 
-    const participation = await ContestParticipation.findById(participationID);
+    const participation = await ContestParticipation.findById(participationID).populate("userId");
     if (!participation)
       return res.status(404).json({ message: "Participation not found" });
 
@@ -90,7 +90,12 @@ exports.getReferralLink = async (req, res) => {
 
     let referralUrl;
     if (entry) {
-      referralUrl = `${frontendBase}/vote-demo?entryId=${entry._id}`;
+      if (entry.entryNumber && participation.userId && participation.userId.name) {
+        const slug = participation.userId.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        referralUrl = `${frontendBase}/vote/${slug}-${entry.entryNumber}`;
+      } else {
+        referralUrl = `${frontendBase}/promote/${entry._id}`;
+      }
     } else {
       // Fallback to contest page if no entry yet
       referralUrl = `${frontendBase}/contest/${contestID}`;

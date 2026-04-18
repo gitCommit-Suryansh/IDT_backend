@@ -57,11 +57,19 @@ exports.uploadEntry = async (req, res) => {
       entry.submittedAt = Date.now();
       await entry.save();
     } else {
+      // Auto-increment entryNumber starting at 1000
+      let newEntryNumber = 1000;
+      const maxEntry = await ContestEntry.findOne().sort('-entryNumber').select('entryNumber');
+      if (maxEntry && maxEntry.entryNumber) {
+        newEntryNumber = maxEntry.entryNumber + 1;
+      }
+
       // Create new entry
       entry = await ContestEntry.create({
         participationId: participation._id,
         userId: user._id,
         contestId: contest._id,
+        entryNumber: newEntryNumber,
         images,
         videoUrl,
         bio,
@@ -94,6 +102,7 @@ exports.getMyEntries = async (req, res) => {
     // Find entries for this user
     const entries = await ContestEntry.find({ userId: user._id })
       .populate("contestId")
+      .populate("userId", "name")
       .sort({ createdAt: -1 });
 
     const Vote = require("../models/Vote");
@@ -145,8 +154,17 @@ exports.getEntryById = async (req, res) => {
   try {
     const { entryId } = req.params;
 
-    const entry = await ContestEntry.findByIdAndUpdate(
-      entryId,
+    // Support querying by raw ObjectId or numeric entryNumber
+    const mongoose = require("mongoose");
+    let query = {};
+    if (mongoose.Types.ObjectId.isValid(entryId)) {
+      query = { _id: entryId };
+    } else {
+      query = { entryNumber: parseInt(entryId, 10) };
+    }
+
+    const entry = await ContestEntry.findOneAndUpdate(
+      query,
       { $inc: { views: 1 } },
       { new: true },
     )
