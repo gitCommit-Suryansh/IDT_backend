@@ -151,13 +151,14 @@ exports.getParticipants = async (req, res) => {
     const participantsWithEntries = await Promise.all(
       participations.map(async (p) => {
         const entry = await ContestEntry.findOne({ participationId: p._id })
-          .select("_id images videoUrl")
+          .select("_id images videoUrl entryNumber")
           .lean();
         
         return {
           ...p,
           entryId: entry ? entry._id.toString() : null,
           hasEntry: !!entry,
+          entryNumber: entry ? entry.entryNumber : null,
           entryThumbnail:
             entry && entry.images && entry.images.length > 0
               ? entry.images[0]

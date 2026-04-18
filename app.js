@@ -44,8 +44,8 @@ app.use(
   }),
 );
 
-app.use(express.json({ limit: "50mb" }));
-app.use(express.urlencoded({ limit: "50mb", extended: true }));
+app.use(express.json({ limit: "100mb" }));
+app.use(express.urlencoded({ limit: "100mb", extended: true }));
 app.use(cookieParser());
 
 app.use(
@@ -62,6 +62,7 @@ app.use("/api/auth", authRoute);
 app.use("/api/contests", contestRoutes);
 app.use("/api/payment", require("./routes/payment"));
 app.use("/api/deletion-requests", require("./routes/deletionRequest"));
+app.use("/api/gallery", require("./routes/gallery"));
 
 app.get("/", (req, res) => {
   return res.json({ message: "pinging" });
