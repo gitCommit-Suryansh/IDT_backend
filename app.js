@@ -63,6 +63,7 @@ app.use("/api/contests", contestRoutes);
 app.use("/api/payment", require("./routes/payment"));
 app.use("/api/deletion-requests", require("./routes/deletionRequest"));
 app.use("/api/gallery", require("./routes/gallery"));
+app.use("/api/notifications", require("./routes/notifications"));
 
 app.get("/", (req, res) => {
   return res.json({ message: "pinging" });
