@@ -1,7 +1,8 @@
 const axios = require("axios");
 
 const FAST2SMS_KEY = process.env.FAST2SMS_API_KEY || null;
-const MESSAGE_ID = process.env.WHATSAPP_MESSAGE_ID; // Fast2SMS specific ID (11985)
+const MESSAGE_ID = process.env.WHATSAPP_MESSAGE_ID;        // OTP template ID
+const ENTRY_MESSAGE_ID = process.env.WHATSAPP_ENTRY_MESSAGE_ID; // Entry confirmation template ID
 
 const normalizeMobile = (mobile) => {
   let str = String(mobile).replace(/\D/g, ""); // Remove non-digits
@@ -76,4 +77,44 @@ const sendOtp = async (mobile, otp) => {
   }
 };
 
-module.exports = sendOtp;
+// ─── Entry Upload Confirmation WhatsApp ─────────────────────────────────────
+// Template variables:  {{1}} = Participation No   |   {{2}} = Voting Link
+const sendEntryUploadWhatsApp = async (mobile, entryNumber, votingUrl) => {
+  const cleanMobile = normalizeMobile(mobile);
+
+  if (!ENTRY_MESSAGE_ID) {
+    console.warn('[Fast2SMS] WHATSAPP_ENTRY_MESSAGE_ID not set – skipping entry WhatsApp notification.');
+    return;
+  }
+
+  const headers = {
+    'cache-control': 'no-cache',
+    'Content-Type': 'application/x-www-form-urlencoded',
+  };
+
+  if (FAST2SMS_KEY) headers['authorization'] = FAST2SMS_KEY.trim();
+
+  // Fast2SMS dual-variable format: pipe-delimited
+  const variablesValues = `${entryNumber}|${votingUrl}`;
+
+  const params = new URLSearchParams();
+  params.append('route', 'whatsapp');
+  params.append('message_id', ENTRY_MESSAGE_ID);
+  params.append('variables_values', variablesValues);
+  params.append('numbers', cleanMobile);
+
+  try {
+    const response = await axios.post('https://www.fast2sms.com/dev/whatsapp', params, { headers });
+    if (response.data.return === true) {
+      console.log(`[Fast2SMS] Entry WhatsApp sent to ${cleanMobile} (entry #${entryNumber})`);
+      return response.data;
+    } else {
+      throw new Error(response.data.message || 'Fast2SMS returned false');
+    }
+  } catch (error) {
+    console.error('[Fast2SMS] Entry WhatsApp Error:', error.response?.data || error.message);
+    // Non-fatal – do not re-throw; caller should not fail because of this
+  }
+};
+
+module.exports = { sendOtp, sendEntryUploadWhatsApp };

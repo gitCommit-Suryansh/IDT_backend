@@ -3,7 +3,7 @@ const { firebaseAuth } = require('../services/firebase');
 const { createUserWithEmailAndPassword, signInWithEmailAndPassword } = require('firebase/auth');
 const generateOtp = require('../utils/otpGenerator');
 const { saveOtp, verifyOtp, saveTempUser, getTempUser, deleteTempUser } = require('../services/otpService');
-const sendOtp = require('../services/fast2sms');
+const { sendOtp } = require('../services/fast2sms');
 
 // ✅ Signup Controller (Step 1: Form Submission)
 exports.signupInitiate = async (req, res) => {

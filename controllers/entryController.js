@@ -2,6 +2,7 @@ const Contest = require("../models/contest");
 const ContestEntry = require("../models/contestEntry");
 const ContestParticipation = require("../models/contestParticipation");
 const User = require("../models/user");
+const { sendEntryUploadWhatsApp } = require("../services/fast2sms");
 
 // POST /api/contests/:contestID/upload-entry
 exports.uploadEntry = async (req, res) => {
@@ -80,6 +81,25 @@ exports.uploadEntry = async (req, res) => {
     // Update participation status
     participation.status = "SUBMITTED";
     await participation.save();
+
+    // ── Fire-and-forget WhatsApp confirmation ────────────────────────────────
+    try {
+      const mobile = user.mobileNumber;
+      if (mobile && entry.entryNumber) {
+        const frontendBase = process.env.FRONTEND_URL || 'https://idteventmanagement.online';
+        // Build slug from user's name: "John Doe" → "john-doe"
+        const nameSlug = (user.name || 'user')
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '');
+        const votingUrl = `${frontendBase}/vote/${nameSlug}-${entry.entryNumber}`;
+        // Non-blocking – don't await so endpoint responds immediately
+        sendEntryUploadWhatsApp(mobile, entry.entryNumber, votingUrl);
+      }
+    } catch (notifyErr) {
+      console.error('[uploadEntry] WhatsApp notify error (non-fatal):', notifyErr.message);
+    }
+    // ────────────────────────────────────────────────────────────────────────
 
     return res.status(200).json({ message: "Entry submitted", entry });
   } catch (err) {
