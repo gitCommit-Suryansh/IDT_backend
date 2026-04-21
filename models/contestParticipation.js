@@ -32,7 +32,7 @@ const contestParticipationSchema = new mongoose.Schema(
       default: "REGISTERED",
     },
   },
-  { timestamps: true },
+  { timestamps: { currentTime: () => new Date(Date.now() + 5.5 * 60 * 60 * 1000) } },
 );
 
 /**

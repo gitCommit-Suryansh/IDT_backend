@@ -36,10 +36,10 @@ const contestEntrySchema = new mongoose.Schema(
     bio: { type: String },
 
     isApproved: { type: Boolean, default: true }, // no approval flow for now
-    submittedAt: { type: Date, default: Date.now },
+    submittedAt: { type: Date, default: () => new Date(Date.now() + 5.5 * 60 * 60 * 1000) },
     views: { type: Number, default: 0 },
   },
-  { timestamps: true }
+  { timestamps: { currentTime: () => new Date(Date.now() + 5.5 * 60 * 60 * 1000) } }
 );
 
 module.exports = mongoose.model("ContestEntry", contestEntrySchema);

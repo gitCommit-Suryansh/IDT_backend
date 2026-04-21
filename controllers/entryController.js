@@ -55,7 +55,7 @@ exports.uploadEntry = async (req, res) => {
       if (videoUrl) entry.videoUrl = videoUrl;
       if (bio) entry.bio = bio;
       entry.isApproved = true; // Auto-approve updates for now
-      entry.submittedAt = Date.now();
+      entry.submittedAt = new Date(Date.now() + 5.5 * 60 * 60 * 1000);
       await entry.save();
     } else {
       // Auto-increment entryNumber starting at 1000

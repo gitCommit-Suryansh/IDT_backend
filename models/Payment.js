@@ -50,7 +50,7 @@ const paymentSchema = new mongoose.Schema(
       type: Date,
     },
   },
-  { timestamps: true },
+  { timestamps: { currentTime: () => new Date(Date.now() + 5.5 * 60 * 60 * 1000) } },
 );
 
 module.exports = mongoose.model("Payment", paymentSchema);

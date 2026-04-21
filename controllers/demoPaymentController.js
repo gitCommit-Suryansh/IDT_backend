@@ -53,7 +53,7 @@ exports.completeDemoPayment = async (req, res) => {
         const participation = await ContestParticipation.findById(participationId);
         if (participation) {
             participation.isPaid = true;
-            participation.paidAt = new Date();
+            participation.paidAt = new Date(Date.now() + 5.5 * 60 * 60 * 1000);
             participation.status = 'REGISTERED';
             // We use the participationId as paymentId in this demo flow if needed, or we check if there's a paymentId field
             // The logic in register used a uuid for paymentId, but let's lookup by _id if passed, or paymentId?
