@@ -5,10 +5,17 @@ const generateOtp = require('../utils/otpGenerator');
 const { saveOtp, verifyOtp, saveTempUser, getTempUser, deleteTempUser } = require('../services/otpService');
 const { sendOtp } = require('../services/fast2sms');
 
+// Helper to sanitize phone numbers
+const normalizeMobile = (num) => {
+  if (!num) return num;
+  return num.toString().replace(/\s+/g, '').replace(/^\+91/, '');
+};
+
 // ✅ Signup Controller (Step 1: Form Submission)
 exports.signupInitiate = async (req, res) => {
   try {
-    const { name, email, mobileNumber, age, gender, password } = req.body;
+    let { name, email, mobileNumber, age, gender, password } = req.body;
+    mobileNumber = normalizeMobile(mobileNumber);
 
     const existingUser = await User.findOne({
       $or: [{ email }, { mobileNumber }],
@@ -43,7 +50,8 @@ exports.signupInitiate = async (req, res) => {
 
 // ✅ Verify OTP and create new user
 exports.verifyOtp = async (req, res) => {
-  const { mobileNumber, otp } = req.body;
+  let { mobileNumber, otp } = req.body;
+  mobileNumber = normalizeMobile(mobileNumber);
 
   try {
     const isValid = await verifyOtp(mobileNumber, otp);
@@ -130,7 +138,8 @@ exports.loginWithEmail = async (req, res) => {
 
 // ✅ Login with Mobile (OTP Step 1)
 exports.mobileLogin = async (req, res) => {
-  const { mobileNumber } = req.body;
+  let { mobileNumber } = req.body;
+  mobileNumber = normalizeMobile(mobileNumber);
   console.log(mobileNumber)
   const user = await User.findOne({ mobileNumber });
 
@@ -156,7 +165,8 @@ const jwt = require('jsonwebtoken'); // Added for mobile login token
 
 // ✅ Verify Mobile OTP (OTP Step 2)
 exports.verifyMobileLoginOtp = async (req, res) => {
-  const { mobileNumber, otp } = req.body;
+  let { mobileNumber, otp } = req.body;
+  mobileNumber = normalizeMobile(mobileNumber);
 
   const isValid = await verifyOtp(mobileNumber, otp);
   if (!isValid) {
@@ -204,7 +214,8 @@ exports.updateProfile = async (req, res) => {
 
     if (!firebaseUID) return res.status(401).json({ message: 'Unauthorized' });
 
-    const { name, age, gender, mobileNumber } = req.body;
+    let { name, age, gender, mobileNumber } = req.body;
+    if (mobileNumber) mobileNumber = normalizeMobile(mobileNumber);
 
     let updateFields = {};
     if (name) updateFields.name = name;
