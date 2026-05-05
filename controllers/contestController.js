@@ -199,7 +199,7 @@ exports.getContestById = async (req, res) => {
 exports.updateContest = async (req, res) => {
   const contestId = req.params.contestID;
   try {
-    const { name, prizePool, firstPrize, secondPrize, thirdPrize, registrationEndAt, votingEndAt, resultsAnnounceAt } = req.body;
+    const { name, prizePool, firstPrize, secondPrize, thirdPrize, registrationStartAt, registrationEndAt, votingEndAt, resultsAnnounceAt } = req.body;
 
     const contest = await Contest.findById(contestId);
     if (!contest) {
@@ -213,6 +213,12 @@ exports.updateContest = async (req, res) => {
     if (thirdPrize !== undefined) contest.thirdPrize = thirdPrize;
 
     const parseUTC = (d) => d ? new Date(d.endsWith('Z') || d.includes('+') ? d : d + 'Z') : null;
+
+    if (registrationStartAt) {
+      const regStart = parseUTC(registrationStartAt);
+      if (isNaN(regStart)) return res.status(400).json({ message: "Invalid registrationStartAt date format" });
+      contest.registrationStartAt = regStart;
+    }
 
     if (registrationEndAt) {
       const regEnd = parseUTC(registrationEndAt);
