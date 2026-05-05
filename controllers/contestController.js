@@ -11,6 +11,9 @@ exports.createContest = async (req, res) => {
       description,
       entryFee,
       prizePool,
+      firstPrize,
+      secondPrize,
+      thirdPrize,
       celebrityName,
 
       registrationStartAt,
@@ -26,6 +29,9 @@ exports.createContest = async (req, res) => {
       !description ||
       entryFee === undefined ||
       prizePool === undefined ||
+      firstPrize === undefined ||
+      secondPrize === undefined ||
+      thirdPrize === undefined ||
       !registrationStartAt ||
       !registrationEndAt ||
       !votingEndAt
@@ -85,6 +91,9 @@ exports.createContest = async (req, res) => {
       description,
       entryFee,
       prizePool,
+      firstPrize,
+      secondPrize,
+      thirdPrize,
       celebrityName,
 
       bannerImage: imageUrl,
@@ -190,7 +199,7 @@ exports.getContestById = async (req, res) => {
 exports.updateContest = async (req, res) => {
   const contestId = req.params.contestID;
   try {
-    const { name, prizePool, registrationEndAt, votingEndAt, resultsAnnounceAt } = req.body;
+    const { name, prizePool, firstPrize, secondPrize, thirdPrize, registrationEndAt, votingEndAt, resultsAnnounceAt } = req.body;
 
     const contest = await Contest.findById(contestId);
     if (!contest) {
@@ -199,6 +208,9 @@ exports.updateContest = async (req, res) => {
 
     if (name) contest.name = name;
     if (prizePool !== undefined) contest.prizePool = prizePool;
+    if (firstPrize !== undefined) contest.firstPrize = firstPrize;
+    if (secondPrize !== undefined) contest.secondPrize = secondPrize;
+    if (thirdPrize !== undefined) contest.thirdPrize = thirdPrize;
 
     const parseUTC = (d) => d ? new Date(d.endsWith('Z') || d.includes('+') ? d : d + 'Z') : null;
 
@@ -230,6 +242,10 @@ exports.updateContest = async (req, res) => {
       const announceDate = parseUTC(resultsAnnounceAt);
       if (announceDate && isNaN(announceDate)) return res.status(400).json({ message: "Invalid resultsAnnounceAt date format" });
       contest.resultsAnnounceAt = announceDate;
+    }
+
+    if (req.file && req.file.path) {
+      contest.bannerImage = req.file.path;
     }
 
     await contest.save();

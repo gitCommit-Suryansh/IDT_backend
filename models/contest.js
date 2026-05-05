@@ -50,6 +50,21 @@ const contestSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
+    firstPrize: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    secondPrize: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    thirdPrize: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
 
     // OPTIONAL DISPLAY
     celebrityName: {

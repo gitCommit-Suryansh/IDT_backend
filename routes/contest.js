@@ -34,7 +34,15 @@ router.get("/entries/:entryId", entryController.getEntryById);
 
 // Dynamic Routes
 router.get("/:contestID", contestController.getContestById);
-router.put("/:contestID/update", contestController.updateContest);
+router.put(
+  "/:contestID/update",
+  (req, res, next) => {
+    req.folderName = "IDT-MEDIA/contests-banners";
+    next();
+  },
+  upload.single("bannerImage"),
+  contestController.updateContest
+);
 
 // Contest Actions
 router.post(
